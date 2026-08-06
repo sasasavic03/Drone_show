@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-night: #070b1f;
+  --color-dusk: #151c42;
+  --color-haze: #2b336b;
+  --color-beam: #ffc15e;
+  --color-pulse: #8b7bff;
+  --color-paper: #f2f1f7;
+  --color-mute: #9aa0c9;
+
+  --font-display: "Unbounded", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-night text-paper font-sans antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-beam;
+  }
+}
+
+@layer components {
+  /* Sitna mono oznaka iznad naslova / u tabelama */
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-mute;
+  }
+}
+
+/* Signature: polje dronova */
+@keyframes drone-breathe {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.drone-dot {
+  animation: drone-breathe 4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drone-dot {
+    animation: none;
+    opacity: 0.7;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

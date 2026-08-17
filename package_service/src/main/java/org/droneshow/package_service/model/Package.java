@@ -37,7 +37,7 @@ public class Package {
     @Column(nullable = false)
     private Integer droneCount;
 
-    @Column(columnDefinition = "boolean default true")
+    @Column(nullable = false)
     private Boolean isActive = true;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

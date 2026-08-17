@@ -48,7 +48,7 @@ public class Booking {
     private String eventType;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(50) default 'PENDING'")
+    @Column(nullable = false, length = 50)
     private BookingStatus status = BookingStatus.PENDING;
 
     @Column

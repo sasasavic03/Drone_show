@@ -121,6 +121,13 @@ public class PackageServiceImpl implements PackageService {
                 .build();
     }
 
+    @Override
+    public List<PackageResponse> listPackages() {
+        return packageRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private PackageResponse mapToResponse(Package pkg) {
         List<PackageOption> options = optionRepository.findByPackageId(pkg.getId());
         List<PackageResponse.PackageOptionResponse> optionResponses = options.stream()

@@ -35,10 +35,19 @@
         <jjwt.version>0.12.6</jjwt.version>
         <postgresql.version>42.7.1</postgresql.version>
         <minio.version>8.5.2</minio.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- JWT -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>

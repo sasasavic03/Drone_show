@@ -13,6 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql
     networks:
       - drone_show_network
     healthcheck:
@@ -43,13 +44,41 @@ services:
 
   api_gateway:
     build:
-      context: .
-      dockerfile: ./api_gateway/Dockerfile
+      context: ./api_gateway
+      dockerfile: Dockerfile
     container_name: api_gateway
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
       - "8080:8080"
+    depends_on:
+      - auth_service
+      - user_service
+      - package_service
+      - booking_service
+      - media_service
+    networks:
+      - drone_show_network
+
+  frontend:
+    image: node:20-alpine
+    container_name: drone_show_frontend
+    working_dir: /app
+    extra_hosts:
+      - "auth_service:host-gateway"
+      - "user_service:host-gateway"
+      - "package_service:host-gateway"
+      - "booking_service:host-gateway"
+      - "media_service:host-gateway"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8080
+      VITE_MEDIA_URL: http://localhost:9000
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     depends_on:
       - auth_service
       - user_service

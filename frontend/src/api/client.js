@@ -1,4 +1,4 @@
-/*auth 3001  users 3002  packages 3003  bookings 3004  media 3005*/
+/*auth 8081  users 8082  packages 8083  bookings 8084  media 8085*/
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -6,29 +6,29 @@ const ACCESS_KEY = 'ds_access_token'
 const REFRESH_KEY = 'ds_refresh_token'
 
 export const ENDPOINTS = {
-  // AUTH SERVICE (3001)
+  // AUTH SERVICE (8081)
   login: '/auth/login',
   register: '/auth/register',
   refresh: '/auth/refresh',
   logout: '/auth/logout',
   me: '/auth/me',
 
-  // USER SERVICE (3002)
+  // USER SERVICE (8082)
   userMe: '/users/me',
   users: '/users',
 
-  // PACKAGE SERVICE (3003)
+  // PACKAGE SERVICE (8083)
   packages: '/packages',
   packageById: (id) => `/packages/${id}`,
   calculatePrice: '/packages/calculate-price',
 
-  // BOOKING SERVICE (3004)
+  // BOOKING SERVICE (8084)
   bookings: '/bookings',
   bookingById: (id) => `/bookings/${id}`,
   bookingStatus: (id) => `/bookings/${id}/status`,
   availability: '/bookings/availability', // ?date=YYYY-MM-DD
 
-  // MEDIA SERVICE (3005)
+  // MEDIA SERVICE (8085)
   media: '/media',
 }
 

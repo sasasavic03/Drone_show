@@ -41,40 +41,36 @@ services:
 
   api_gateway:
     build: ./api_gateway
-    container_name: api_gateway
+    container_name: api-gateway
     ports:
       - "8080:8080"
     depends_on:
-      - auth_service
-      - user_service
-      - package_service
-      - booking_service
-      - media_service
+      - auth-service
+      - user-service
+      - package-service
+      - booking-service
+      - media-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-key-change-in-production-min-32-chars-required}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
     networks:
       - drone_show_network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+
 
   frontend:
     build: ./frontend
     container_name: frontend
     ports:
-      - "3000:8080"
+      - "3000:3000"
     depends_on:
       - api_gateway
     networks:
       - drone_show_network
 
-  auth_service:
+  auth-service:
     build: ./auth_service
-    container_name: auth_service
+    container_name: auth-service
     ports:
       - "8081:8080"
     depends_on:
@@ -88,9 +84,9 @@ services:
     networks:
       - drone_show_network
 
-  user_service:
+  user-service:
     build: ./user_service
-    container_name: user_service
+    container_name: user-service
     ports:
       - "8082:8080"
     depends_on:
@@ -107,9 +103,9 @@ services:
     networks:
       - drone_show_network
 
-  package_service:
+  package-service:
     build: ./package_service
-    container_name: package_service
+    container_name: package-service
     ports:
       - "8083:8080"
     depends_on:
@@ -123,9 +119,9 @@ services:
     networks:
       - drone_show_network
 
-  booking_service:
+  booking-service:
     build: ./booking_service
-    container_name: booking_service
+    container_name: booking-service
     ports:
       - "8084:8080"
     depends_on:
@@ -139,9 +135,9 @@ services:
     networks:
       - drone_show_network
 
-  media_service:
+  media-service:
     build: ./media_service
-    container_name: media_service
+    container_name: media-service
     ports:
       - "8085:8080"
     depends_on:

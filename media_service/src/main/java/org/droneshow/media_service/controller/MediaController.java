@@ -31,4 +31,10 @@ public class MediaController {
 
         return ResponseEntity.ok(media);
     }
+    @GetMapping("/file/{fileName:.+}")
+    public ResponseEntity<byte[]> getFile(
+            @PathVariable String fileName) {
+
+        return mediaService.getFile(fileName);
+    }
 }

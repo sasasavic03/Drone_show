@@ -1,19 +1,21 @@
 package org.droneshow.media_service.service;
 
+import io.minio.GetObjectArgs;
 import io.minio.GetObjectTagsArgs;
-import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.Result;
-import io.minio.http.Method;
 import io.minio.messages.Item;
 import io.minio.messages.Tags;
 
 import org.droneshow.media_service.dto.MediaResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -23,12 +25,6 @@ import java.util.Map;
 public class MediaServiceImpl implements MediaService {
 
     private final MinioClient minioClient;
-
-    @Value("${minio.url}")
-    private String minioUrl;
-
-    @Value("${minio.public-url}")
-    private String publicUrl;
 
     @Value("${minio.bucket.posts}")
     private String postsBucket;
@@ -45,6 +41,46 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public List<MediaResponse> getMediaByEventType(String eventType) {
         return findMedia(eventType);
+    }
+
+    @Override
+    public ResponseEntity<byte[]> getFile(String fileName) {
+
+        try {
+
+            // Get file from MinIO
+            try (InputStream inputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(postsBucket)
+                            .object(fileName)
+                            .build()
+            )) {
+
+                byte[] fileBytes = inputStream.readAllBytes();
+
+                MediaType mediaType = getMediaType(fileName);
+
+                return ResponseEntity.ok()
+                        .contentType(mediaType)
+                        .contentLength(fileBytes.length)
+                        .header(
+                                HttpHeaders.CONTENT_DISPOSITION,
+                                "inline; filename=\"" + fileName + "\""
+                        )
+                        .body(fileBytes);
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Failed to get file from MinIO: "
+                            + fileName
+                            + " - "
+                            + e.getMessage()
+            );
+
+            return ResponseEntity.notFound().build();
+        }
     }
 
     private List<MediaResponse> findMedia(String eventType) {
@@ -77,8 +113,8 @@ public class MediaServiceImpl implements MediaService {
 
                 String objectEventType = getEventType(objectName);
 
-                // Filter by event type when requested
-                if (eventType != null && !eventType.isBlank()) {
+                // Filter by event type
+                if (eventType != null) {
 
                     if (objectEventType == null) {
                         continue;
@@ -89,26 +125,19 @@ public class MediaServiceImpl implements MediaService {
                     }
                 }
 
-                // Generate presigned URL using the INTERNAL MinIO address.
-                String internalUrl = minioClient.getPresignedObjectUrl(
-                        GetPresignedObjectUrlArgs.builder()
-                                .method(Method.GET)
-                                .bucket(postsBucket)
-                                .object(objectName)
-                                .expiry(60 * 60)
-                                .build()
-                );
-
-                // Change only the hostname so the browser can access it.
-                String publicImageUrl = internalUrl.replace(
-                        minioUrl,
-                        publicUrl
-                );
+                /*
+                 * IMPORTANT:
+                 *
+                 * Do NOT return the MinIO URL.
+                 *
+                 * Return URL of OUR backend.
+                 */
+                String url = "/media/file/" + objectName;
 
                 result.add(
                         MediaResponse.builder()
                                 .fileName(objectName)
-                                .url(publicImageUrl)
+                                .url(url)
                                 .eventType(objectEventType)
                                 .build()
                 );
@@ -138,13 +167,7 @@ public class MediaServiceImpl implements MediaService {
 
             Map<String, String> tagMap = tags.get();
 
-            String eventType = tagMap.get("eventType");
-
-            if (eventType == null) {
-                return null;
-            }
-
-            return eventType.toUpperCase(Locale.ROOT);
+            return tagMap.get("eventType");
 
         } catch (Exception e) {
 
@@ -161,12 +184,38 @@ public class MediaServiceImpl implements MediaService {
 
     private boolean isImage(String objectName) {
 
-        String lower = objectName.toLowerCase(Locale.ROOT);
+        String lower =
+                objectName.toLowerCase(Locale.ROOT);
 
         return lower.endsWith(".jpg")
                 || lower.endsWith(".jpeg")
                 || lower.endsWith(".png")
                 || lower.endsWith(".webp")
                 || lower.endsWith(".gif");
+    }
+
+    private MediaType getMediaType(String fileName) {
+
+        String lower =
+                fileName.toLowerCase(Locale.ROOT);
+
+        if (lower.endsWith(".png")) {
+            return MediaType.IMAGE_PNG;
+        }
+
+        if (lower.endsWith(".jpg")
+                || lower.endsWith(".jpeg")) {
+            return MediaType.IMAGE_JPEG;
+        }
+
+        if (lower.endsWith(".gif")) {
+            return MediaType.IMAGE_GIF;
+        }
+
+        if (lower.endsWith(".webp")) {
+            return MediaType.parseMediaType("image/webp");
+        }
+
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 }

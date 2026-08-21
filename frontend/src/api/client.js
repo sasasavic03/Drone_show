@@ -125,6 +125,10 @@ async function rawRequest(path, { method = 'GET', body, auth = true, signal } = 
     throw new ApiError(message, res.status, data)
   }
 
+  // Backend odgovori su omotani u { success, message, data, timestamp }.
+  if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+    return data.data
+  }
   return data
 }
 

@@ -1,0 +1,57 @@
+spring:
+  profiles:
+    active: docker
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: http://auth-service:8080
+              predicates:
+                - Path=/auth/**
+
+            - id: user-service
+              uri: http://user-service:8080
+              predicates:
+                - Path=/users/**
+
+            - id: package-service
+              uri: http://package-service:8080
+              predicates:
+                - Path=/packages/**
+
+            - id: booking-service
+              uri: http://booking-service:8080
+              predicates:
+                - Path=/bookings/**
+
+            - id: media-service
+              uri: http://media-service:8080
+              predicates:
+                - Path=/media/**
+
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOriginPatterns: "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                exposedHeaders: "*"
+
+server:
+  port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-key-change-in-production-min-32-chars-required}
+
+logging:
+  level:
+    root: INFO

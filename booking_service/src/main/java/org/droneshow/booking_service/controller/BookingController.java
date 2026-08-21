@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/bookings")
@@ -30,6 +31,28 @@ public class BookingController {
         BookingResponse response = bookingService.createBooking(token, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Booking created", response));
+    }
+
+    /**
+     * Get current user's bookings
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getMyBookings(
+            @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        List<BookingResponse> response = bookingService.getMyBookings(token);
+        return ResponseEntity.ok(ApiResponse.success("Bookings retrieved", response));
+    }
+
+    /**
+     * Get all bookings (ADMIN only)
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getAllBookings(
+            @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        List<BookingResponse> response = bookingService.getAllBookings(token);
+        return ResponseEntity.ok(ApiResponse.success("Bookings retrieved", response));
     }
 
     /**

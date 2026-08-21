@@ -12,6 +12,7 @@ import org.droneshow.booking_service.model.BookingStatus;
 import org.droneshow.booking_service.repository.BookingOptionRepository;
 import org.droneshow.booking_service.repository.BookingRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,6 +95,24 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
         return mapToResponse(booking);
+    }
+
+    @Override
+    public List<BookingResponse> getMyBookings(String token) {
+        Long userId = getUserIdFromToken(token);
+        return bookingRepository.findByUserId(userId, Pageable.unpaged())
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BookingResponse> getAllBookings(String token) {
+        verifyAdmin(token);
+        return bookingRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override

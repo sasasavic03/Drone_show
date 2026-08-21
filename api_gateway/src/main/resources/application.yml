@@ -7,6 +7,7 @@ spring:
       server:
         webflux:
           routes:
+
             - id: auth-service
               uri: http://auth-service:8080
               predicates:
@@ -27,15 +28,15 @@ spring:
               predicates:
                 - Path=/bookings/**
 
-            - id: booking-service
-              uri: http://booking-service:8080
-              predicates:
-                - Path=/bookings/**
-
             - id: media-service
               uri: http://media-service:8080
               predicates:
                 - Path=/media/**
+
+            - id: media-service-root
+              uri: http://media-service:8080
+              predicates:
+                - Path=/media
 
           globalcors:
             cors-configurations:

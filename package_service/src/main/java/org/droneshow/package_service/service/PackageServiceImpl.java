@@ -151,5 +151,24 @@ public class PackageServiceImpl implements PackageService {
                 .options(optionResponses)
                 .build();
     }
+
+    @Override
+    public PackageResponse getPackageByName(String name) {
+
+        Package pkg = packageRepository.findByNameIgnoreCase(name)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Package not found: " + name
+                        ));
+
+        if (!Boolean.TRUE.equals(pkg.getIsActive())) {
+            throw new ResourceNotFoundException(
+                    "Package is not active: " + name
+            );
+        }
+
+        return mapToResponse(pkg);
+    }
+
 }
 

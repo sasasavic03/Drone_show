@@ -15,7 +15,7 @@ import java.util.List;
 public class CreateBookingRequest {
 
     @NotNull(message = "Package ID is required")
-    private Long packageId;
+    private String packageId;
 
     @NotNull(message = "Event date is required")
     @FutureOrPresent(message = "Event date must be in the future")

@@ -3,6 +3,7 @@ package org.droneshow.booking_service.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.droneshow.booking_service.client.PackageServiceClient;
 import org.droneshow.booking_service.dto.*;
 import org.droneshow.booking_service.exception.BookingException;
 import org.droneshow.booking_service.exception.ResourceNotFoundException;
@@ -32,37 +33,73 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final BookingOptionRepository bookingOptionRepository;
+    private final PackageServiceClient packageServiceClient;
+
 
     public BookingServiceImpl(BookingRepository bookingRepository,
-                            BookingOptionRepository bookingOptionRepository) {
+                            BookingOptionRepository bookingOptionRepository,
+                            PackageServiceClient packageServiceClient) {
         this.bookingRepository = bookingRepository;
         this.bookingOptionRepository = bookingOptionRepository;
+        this.packageServiceClient = packageServiceClient;
     }
-
     @Override
-    public BookingResponse createBooking(String token, CreateBookingRequest request) {
-        // Verify user from token
+    public BookingResponse createBooking(
+            String token,
+            CreateBookingRequest request) {
+
+        // 1. Get authenticated user
         Long userId = getUserIdFromToken(token);
 
-        // Check if slot is available
-        long bookingsOnDay = bookingRepository.countByEventDate(request.getEventDate());
+        // 2. Resolve package name -> package ID
+        PackageResponse pkg =
+                packageServiceClient.getPackageByName(
+                        request.getPackageId()
+                );
+
+        if (pkg == null) {
+            throw new BookingException("Package not found");
+        }
+
+        if (!Boolean.TRUE.equals(pkg.getIsActive())) {
+            throw new BookingException("Package is not active");
+        }
+
+        // 3. Check daily booking limit
+        long bookingsOnDay =
+                bookingRepository.countByEventDate(
+                        request.getEventDate()
+                );
+
         if (bookingsOnDay >= 2) {
-            throw new BookingException("Maximum bookings for this date exceeded");
+            throw new BookingException(
+                    "Maximum bookings for this date exceeded"
+            );
         }
 
-        // Check for duplicate booking on same date/time
-        List<Booking> existing = bookingRepository.findByEventDate(request.getEventDate());
-        if (existing.stream().anyMatch(b -> b.getEventTime().equals(request.getEventTime()))) {
-            throw new BookingException("Time slot already booked");
+        // 4. Check duplicate time slot
+        List<Booking> existing =
+                bookingRepository.findByEventDate(
+                        request.getEventDate()
+                );
+
+        if (existing.stream()
+                .anyMatch(b ->
+                        b.getEventTime()
+                                .equals(request.getEventTime()))) {
+
+            throw new BookingException(
+                    "Time slot already booked"
+            );
         }
 
-        // Calculate price (would call Package Service in real system)
-        BigDecimal totalPrice = calculatePrice(request);
+        // 5. Calculate base price from Package Service
+        BigDecimal totalPrice = pkg.getBasePrice();
 
-        // Create booking
+        // 6. Create booking
         Booking booking = Booking.builder()
                 .userId(userId)
-                .packageId(request.getPackageId())
+                .packageId(pkg.getId())
                 .eventDate(request.getEventDate())
                 .eventTime(request.getEventTime())
                 .location(request.getLocation())
@@ -74,21 +111,27 @@ public class BookingServiceImpl implements BookingService {
                 .userNote(request.getUserNote())
                 .build();
 
+        // 7. Save booking
         booking = bookingRepository.save(booking);
 
-        // Add options if provided
-        if (request.getOptionIds() != null && !request.getOptionIds().isEmpty()) {
+        // 8. Save options
+        if (request.getOptionIds() != null
+                && !request.getOptionIds().isEmpty()) {
+
             for (Long optionId : request.getOptionIds()) {
+
                 BookingOption option = BookingOption.builder()
                         .bookingId(booking.getId())
                         .optionId(optionId)
                         .build();
+
                 bookingOptionRepository.save(option);
             }
         }
 
         return mapToResponse(booking);
     }
+
 
     @Override
     public BookingResponse getBookingById(Long bookingId) {
@@ -180,6 +223,7 @@ public class BookingServiceImpl implements BookingService {
         // For now, return a default price
         return BigDecimal.valueOf(1500);
     }
+
 
     private Long getUserIdFromToken(String token) {
         try {

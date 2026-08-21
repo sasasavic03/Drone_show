@@ -10,15 +10,19 @@ public interface PackageService {
 
     PackageResponse getPackageById(Long packageId);
 
-    // List all packages (active and inactive) - used by frontend
+    PackageResponse getPackageByName(String name);
+
     List<PackageResponse> listPackages();
 
     PackageResponse updatePackage(Long packageId, CreatePackageRequest request);
 
     void deletePackage(Long packageId);
 
-    PackageResponse.PackageOptionResponse addOptionToPackage(CreatePackageOptionRequest request);
+    PackageResponse.PackageOptionResponse addOptionToPackage(
+            CreatePackageOptionRequest request);
 
-    PriceCalculationResponse calculatePrice(PriceCalculationRequest request);
+    PriceCalculationResponse calculatePrice(
+            PriceCalculationRequest request);
 }
+
 
